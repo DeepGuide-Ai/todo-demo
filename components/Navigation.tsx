@@ -1,34 +1,19 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
+import { useSession, signOut } from '@/lib/auth-client'
 
 export default function Navigation() {
   const router = useRouter()
   const pathname = usePathname()
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [userEmail, setUserEmail] = useState('')
+  const { data: session } = useSession()
   const [showDropdown, setShowDropdown] = useState(false)
 
-  useEffect(() => {
-    const checkAuth = () => {
-      const loggedIn = localStorage.getItem('isLoggedIn') === 'true'
-      const email = localStorage.getItem('userEmail') || ''
-      setIsLoggedIn(loggedIn)
-      setUserEmail(email)
-    }
-    
-    checkAuth()
-    window.addEventListener('storage', checkAuth)
-    return () => window.removeEventListener('storage', checkAuth)
-  }, [])
-
-  const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn')
-    localStorage.removeItem('userEmail')
-    setIsLoggedIn(false)
-    setUserEmail('')
+  const handleLogout = async () => {
+    await signOut()
+    setShowDropdown(false)
     router.push('/login')
   }
 
@@ -59,18 +44,18 @@ export default function Navigation() {
         </div>
         
         <div className="flex items-center space-x-4">
-          {isLoggedIn ? (
+          {session?.user ? (
             <div className="relative">
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
                 className="flex items-center space-x-2 text-gray-700 hover:text-gray-900"
               >
-                <span className="text-sm">{userEmail}</span>
+                <span className="text-sm">{session.user.email}</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              
+
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
                   <Link
