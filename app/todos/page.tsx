@@ -29,90 +29,111 @@ export default function Todos() {
   })
 
   useEffect(() => {
-    // Load todos from localStorage
-    const savedTodos = localStorage.getItem('todos')
-    if (savedTodos) {
-      setTodos(JSON.parse(savedTodos))
-    } else {
-      // Initial sample todos
-      const sampleTodos: Todo[] = [
-        {
-          id: '1',
-          title: 'Complete project documentation',
-          description: 'Write comprehensive documentation for the new feature',
-          completed: false,
-          priority: 'high',
-          dueDate: '2024-01-15',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: '2',
-          title: 'Review pull requests',
-          description: 'Review and approve pending PRs from the team',
-          completed: true,
-          priority: 'medium',
-          dueDate: '2024-01-10',
-          createdAt: new Date().toISOString()
-        }
-      ]
-      setTodos(sampleTodos)
-      localStorage.setItem('todos', JSON.stringify(sampleTodos))
-    }
+    fetchTodos()
   }, [])
 
-  const saveTodos = (newTodos: Todo[]) => {
-    setTodos(newTodos)
-    localStorage.setItem('todos', JSON.stringify(newTodos))
+  const fetchTodos = async () => {
+    try {
+      const response = await fetch('/api/todos')
+      if (response.ok) {
+        const data = await response.json()
+        setTodos(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch todos:', error)
+    }
   }
 
-  const handleAddTodo = () => {
+  const handleAddTodo = async () => {
     if (!formData.title.trim()) return
 
-    const newTodo: Todo = {
-      id: Date.now().toString(),
-      title: formData.title,
-      description: formData.description,
-      completed: false,
-      priority: formData.priority,
-      dueDate: formData.dueDate,
-      createdAt: new Date().toISOString()
-    }
+    try {
+      const response = await fetch('/api/todos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          priority: formData.priority,
+          dueDate: formData.dueDate,
+        }),
+      })
 
-    saveTodos([...todos, newTodo])
-    setShowAddModal(false)
-    resetForm()
+      if (response.ok) {
+        await fetchTodos()
+        setShowAddModal(false)
+        resetForm()
+      }
+    } catch (error) {
+      console.error('Failed to add todo:', error)
+    }
   }
 
-  const handleUpdateTodo = () => {
+  const handleUpdateTodo = async () => {
     if (!editingTodo || !formData.title.trim()) return
 
-    const updatedTodos = todos.map(todo =>
-      todo.id === editingTodo.id
-        ? {
-            ...todo,
-            title: formData.title,
-            description: formData.description,
-            priority: formData.priority,
-            dueDate: formData.dueDate
-          }
-        : todo
-    )
+    try {
+      const response = await fetch(`/api/todos/${editingTodo.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          priority: formData.priority,
+          dueDate: formData.dueDate,
+        }),
+      })
 
-    saveTodos(updatedTodos)
-    setEditingTodo(null)
-    resetForm()
+      if (response.ok) {
+        await fetchTodos()
+        setEditingTodo(null)
+        resetForm()
+      }
+    } catch (error) {
+      console.error('Failed to update todo:', error)
+    }
   }
 
-  const handleToggleComplete = (id: string) => {
-    const updatedTodos = todos.map(todo =>
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    )
-    saveTodos(updatedTodos)
+  const handleToggleComplete = async (id: string) => {
+    const todo = todos.find(t => t.id === id)
+    if (!todo) return
+
+    try {
+      const response = await fetch(`/api/todos/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          completed: !todo.completed,
+        }),
+      })
+
+      if (response.ok) {
+        await fetchTodos()
+      }
+    } catch (error) {
+      console.error('Failed to toggle todo:', error)
+    }
   }
 
-  const handleDeleteTodo = (id: string) => {
-    if (confirm('Are you sure you want to delete this todo?')) {
-      saveTodos(todos.filter(todo => todo.id !== id))
+  const handleDeleteTodo = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this todo?')) return
+
+    try {
+      const response = await fetch(`/api/todos/${id}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        await fetchTodos()
+      }
+    } catch (error) {
+      console.error('Failed to delete todo:', error)
     }
   }
 
