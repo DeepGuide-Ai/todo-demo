@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { signUp } from '@/lib/auth-client'
 
 export default function Signup() {
   const router = useRouter()
@@ -41,17 +42,28 @@ export default function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateForm()) return
-    
+
     setIsLoading(true)
-    
-    // Simulate API call
-    setTimeout(() => {
-      localStorage.setItem('isLoggedIn', 'true')
-      localStorage.setItem('userEmail', formData.email)
-      router.push('/')
-    }, 1500)
+
+    try {
+      const result = await signUp.email({
+        email: formData.email,
+        password: formData.password,
+        name: `${formData.firstName} ${formData.lastName}`,
+      })
+
+      if (result.error) {
+        setErrors({ email: result.error.message || 'Failed to create account' })
+        setIsLoading(false)
+      } else {
+        router.push('/')
+      }
+    } catch (err) {
+      setErrors({ email: 'An error occurred during sign up' })
+      setIsLoading(false)
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

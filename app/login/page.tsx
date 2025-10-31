@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { signIn } from '@/lib/auth-client'
 
 export default function Login() {
   const router = useRouter()
@@ -17,17 +18,22 @@ export default function Login() {
     setError('')
     setIsLoading(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      if (email === 'demo@example.com' && password === 'password') {
-        localStorage.setItem('isLoggedIn', 'true')
-        localStorage.setItem('userEmail', email)
-        router.push('/')
-      } else {
-        setError('Invalid email or password')
+    try {
+      const result = await signIn.email({
+        email,
+        password,
+      })
+
+      if (result.error) {
+        setError(result.error.message || 'Invalid email or password')
         setIsLoading(false)
+      } else {
+        router.push('/')
       }
-    }, 1000)
+    } catch (err) {
+      setError('An error occurred during sign in')
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -46,10 +52,11 @@ export default function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="demo@example.com"
+                placeholder="Enter your email"
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+              <p className="text-xs text-gray-500 mt-1">Demo: demo@example.com / password123</p>
             </div>
 
             <div>
@@ -74,7 +81,6 @@ export default function Login() {
                   {showPassword ? '👁️' : '👁️‍🗨️'}
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Hint: demo@example.com / password</p>
             </div>
 
             {error && (
