@@ -13,7 +13,7 @@ Create a best-in-class productivity platform that seamlessly integrates personal
 
 #### 1.1 Backend Infrastructure
 - [ ] Migrate from localStorage to production database (PostgreSQL/Supabase)
-- [ ] Implement proper authentication system (NextAuth.js)
+- [ ] Implement proper authentication system (BetterAuth)
 - [ ] Create RESTful API endpoints with proper validation
 - [ ] Add real-time sync capabilities (WebSockets/Server-Sent Events)
 - [ ] Implement data backup and recovery mechanisms

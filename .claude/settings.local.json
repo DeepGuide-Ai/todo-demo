@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npm run:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npx @better-auth/cli:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npx prisma migrate:*)"
     ],
     "deny": [],
     "ask": []
