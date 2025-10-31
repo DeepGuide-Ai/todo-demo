@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navigation from '@/components/Navigation'
 
 type Project = {
@@ -15,67 +15,44 @@ type Project = {
   tags: string[]
 }
 
-const mockProjects: Project[] = [
-  {
-    id: '1',
-    name: 'E-commerce Platform',
-    description: 'Build a modern e-commerce platform with AI-powered recommendations',
-    status: 'in-progress',
-    progress: 65,
-    team: ['Alice', 'Bob', 'Charlie'],
-    dueDate: '2024-02-15',
-    priority: 'high',
-    tags: ['React', 'Node.js', 'AI']
-  },
-  {
-    id: '2',
-    name: 'Mobile App Redesign',
-    description: 'Complete redesign of our mobile application with new UI/UX',
-    status: 'planning',
-    progress: 20,
-    team: ['Diana', 'Eve'],
-    dueDate: '2024-03-01',
-    priority: 'medium',
-    tags: ['React Native', 'Design']
-  },
-  {
-    id: '3',
-    name: 'Data Analytics Dashboard',
-    description: 'Create comprehensive analytics dashboard for business intelligence',
-    status: 'review',
-    progress: 85,
-    team: ['Frank', 'Grace'],
-    dueDate: '2024-01-30',
-    priority: 'high',
-    tags: ['Data', 'Visualization', 'Python']
-  },
-  {
-    id: '4',
-    name: 'API Documentation',
-    description: 'Document all public APIs with interactive examples',
-    status: 'completed',
-    progress: 100,
-    team: ['Henry'],
-    dueDate: '2024-01-15',
-    priority: 'low',
-    tags: ['Documentation', 'API']
-  }
-]
-
 export default function Projects() {
-  const [projects, setProjects] = useState<Project[]>(mockProjects)
+  const [projects, setProjects] = useState<Project[]>([])
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [showNewProjectModal, setShowNewProjectModal] = useState(false)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
-  
+  const [isLoading, setIsLoading] = useState(true)
+
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
     priority: 'medium' as Project['priority'],
     dueDate: ''
   })
+
+  useEffect(() => {
+    fetchProjects()
+  }, [])
+
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch('/api/projects')
+      if (response.ok) {
+        const data = await response.json()
+        const parsedProjects = data.map((p: any) => ({
+          ...p,
+          team: JSON.parse(p.team || '[]'),
+          tags: JSON.parse(p.tags || '[]')
+        }))
+        setProjects(parsedProjects)
+      }
+    } catch (error) {
+      console.error('Failed to fetch projects:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -101,38 +78,82 @@ export default function Projects() {
     }
   }
 
-  const handleCreateProject = () => {
+  const handleCreateProject = async () => {
     if (!newProject.name) return
-    
-    const project: Project = {
-      id: Date.now().toString(),
-      name: newProject.name,
-      description: newProject.description,
-      status: 'planning',
-      progress: 0,
-      team: [],
-      dueDate: newProject.dueDate,
-      priority: newProject.priority,
-      tags: []
+
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newProject.name,
+          description: newProject.description,
+          priority: newProject.priority,
+          dueDate: newProject.dueDate,
+          status: 'planning',
+          progress: 0,
+          team: [],
+          tags: []
+        }),
+      })
+
+      if (response.ok) {
+        await fetchProjects()
+        setShowNewProjectModal(false)
+        setNewProject({ name: '', description: '', priority: 'medium', dueDate: '' })
+      }
+    } catch (error) {
+      console.error('Failed to create project:', error)
     }
-    
-    setProjects([...projects, project])
-    setShowNewProjectModal(false)
-    setNewProject({ name: '', description: '', priority: 'medium', dueDate: '' })
   }
 
-  const handleUpdateProgress = (projectId: string, newProgress: number) => {
-    setProjects(projects.map(p => 
-      p.id === projectId 
-        ? { ...p, progress: newProgress, status: newProgress === 100 ? 'completed' : p.status }
-        : p
-    ))
+  const handleUpdateProgress = async (projectId: string, newProgress: number) => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          progress: newProgress,
+          status: newProgress === 100 ? 'completed' : undefined
+        }),
+      })
+
+      if (response.ok) {
+        await fetchProjects()
+        // Update selectedProject if it's the one being updated
+        if (selectedProject?.id === projectId) {
+          const updatedProject = projects.find(p => p.id === projectId)
+          if (updatedProject) {
+            setSelectedProject({ ...updatedProject, progress: newProgress })
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to update project:', error)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div>
+        <Navigation />
+        <div className="container">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-gray-500">Loading projects...</div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div>
       <Navigation />
-      
+
       <div className="container">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Projects</h1>

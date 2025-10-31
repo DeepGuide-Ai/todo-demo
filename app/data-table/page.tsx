@@ -47,80 +47,19 @@ export default function DataTable() {
   })
 
   useEffect(() => {
-    const savedUsers = localStorage.getItem('users')
-    if (savedUsers) {
-      setUsers(JSON.parse(savedUsers))
-    } else {
-      const sampleUsers: User[] = [
-        {
-          id: '1',
-          name: 'John Doe',
-          email: 'john.doe@example.com',
-          role: 'admin',
-          department: 'Engineering',
-          status: 'active',
-          joinDate: '2023-01-15',
-          phone: '+1 234-567-8900',
-          location: 'New York, USA',
-          projects: 12
-        },
-        {
-          id: '2',
-          name: 'Jane Smith',
-          email: 'jane.smith@example.com',
-          role: 'manager',
-          department: 'Product',
-          status: 'active',
-          joinDate: '2023-03-20',
-          phone: '+1 234-567-8901',
-          location: 'San Francisco, USA',
-          projects: 8
-        },
-        {
-          id: '3',
-          name: 'Bob Wilson',
-          email: 'bob.wilson@example.com',
-          role: 'member',
-          department: 'Design',
-          status: 'active',
-          joinDate: '2023-06-10',
-          phone: '+1 234-567-8902',
-          location: 'Austin, USA',
-          projects: 5
-        },
-        {
-          id: '4',
-          name: 'Alice Brown',
-          email: 'alice.brown@example.com',
-          role: 'member',
-          department: 'Marketing',
-          status: 'inactive',
-          joinDate: '2023-02-28',
-          phone: '+1 234-567-8903',
-          location: 'Seattle, USA',
-          projects: 3
-        },
-        {
-          id: '5',
-          name: 'Charlie Davis',
-          email: 'charlie.davis@example.com',
-          role: 'manager',
-          department: 'Sales',
-          status: 'active',
-          joinDate: '2023-04-15',
-          phone: '+1 234-567-8904',
-          location: 'Boston, USA',
-          projects: 10
-        }
-      ]
-      setUsers(sampleUsers)
-      localStorage.setItem('users', JSON.stringify(sampleUsers))
-    }
+    fetchUsers()
   }, [])
 
-  const saveUsers = (newUsers: User[]) => {
-    setUsers(newUsers)
-    localStorage.setItem('users', JSON.stringify(newUsers))
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/team-members')
+      if (response.ok) {
+        const data = await response.json()
+        setUsers(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch team members:', error)
+    }
   }
 
   const handleSort = (field: keyof User) => {
@@ -146,28 +85,35 @@ export default function DataTable() {
     setShowEditModal(true)
   }
 
-  const handleUpdateUser = () => {
+  const handleUpdateUser = async () => {
     if (!selectedUser || !formData.name.trim() || !formData.email.trim()) return
 
-    const updatedUsers = users.map(user =>
-      user.id === selectedUser.id
-        ? {
-            ...user,
-            name: formData.name,
-            email: formData.email,
-            role: formData.role,
-            department: formData.department,
-            status: formData.status,
-            phone: formData.phone,
-            location: formData.location
-          }
-        : user
-    )
+    try {
+      const response = await fetch(`/api/team-members/${selectedUser.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          role: formData.role,
+          department: formData.department,
+          status: formData.status,
+          phone: formData.phone,
+          location: formData.location
+        }),
+      })
 
-    saveUsers(updatedUsers)
-    setShowEditModal(false)
-    setSelectedUser(null)
-    resetForm()
+      if (response.ok) {
+        await fetchUsers()
+        setShowEditModal(false)
+        setSelectedUser(null)
+        resetForm()
+      }
+    } catch (error) {
+      console.error('Failed to update team member:', error)
+    }
   }
 
   const handleDeleteClick = (user: User) => {
@@ -175,13 +121,22 @@ export default function DataTable() {
     setShowDeleteModal(true)
   }
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!selectedUser) return
 
-    const updatedUsers = users.filter(user => user.id !== selectedUser.id)
-    saveUsers(updatedUsers)
-    setShowDeleteModal(false)
-    setSelectedUser(null)
+    try {
+      const response = await fetch(`/api/team-members/${selectedUser.id}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        await fetchUsers()
+        setShowDeleteModal(false)
+        setSelectedUser(null)
+      }
+    } catch (error) {
+      console.error('Failed to delete team member:', error)
+    }
   }
 
   const resetForm = () => {
