@@ -19,19 +19,57 @@ model Todo {
   priority    String   @default("medium")
   dueDate     String?
   createdAt   DateTime @default(now())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  status      String   @default("planning")
+  progress    Int      @default(0)
+  team        String   // JSON array of team member names
+  dueDate     String
+  priority    String   @default("medium")
+  tags        String   // JSON array of tags
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TeamMember {
+  id         String   @id @default(cuid())
+  name       String
+  email      String   @unique
+  role       String
+  department String
+  status     String   @default("active")
+  joinDate   String
+  phone      String?
+  location   String?
+  projects   Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // Better Auth Models
 model User {
-  id            String    @id @default(cuid())
+  id            String        @id @default(cuid())
   name          String?
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String        @unique
+  emailVerified Boolean       @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
   sessions      Session[]
   accounts      Account[]
+  todos         Todo[]
+  projects      Project[]
+  teamMembers   TeamMember[]
 }
 
 model Session {
