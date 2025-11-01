@@ -2,6 +2,35 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import Navigation from '@/components/Navigation'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
 type User = {
   id: string
@@ -219,17 +248,15 @@ export default function DataTable() {
     setShowExportModal(false)
   }
 
-  const getStatusBadge = (status: User['status']) => {
-    return status === 'active'
-      ? 'bg-green-100 text-green-800'
-      : 'bg-red-100 text-red-800'
+  const getStatusVariant = (status: User['status']): 'default' | 'destructive' => {
+    return status === 'active' ? 'default' : 'destructive'
   }
 
-  const getRoleBadgeColor = (role: User['role']) => {
+  const getRoleVariant = (role: User['role']): 'default' | 'secondary' | 'outline' => {
     switch (role) {
-      case 'admin': return 'bg-purple-100 text-purple-800'
-      case 'manager': return 'bg-blue-100 text-blue-800'
-      case 'member': return 'bg-gray-100 text-gray-800'
+      case 'admin': return 'default'
+      case 'manager': return 'secondary'
+      case 'member': return 'outline'
     }
   }
 
@@ -239,525 +266,575 @@ export default function DataTable() {
   return (
     <div>
       <Navigation />
-      
-      <div className="container">
+
+      <div className="container py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">User Management</h1>
           <div className="flex gap-2">
-            <button
+            <Button
               id="export-data-button"
+              variant="secondary"
               onClick={() => setShowExportModal(true)}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
             >
               Export
-            </button>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            </Button>
+            <Button>
               + Add User
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <div className="flex flex-wrap gap-4 items-center mb-4">
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1 min-w-[300px] px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              id="toggle-filters-button"
-              onClick={() => setShowFilters(!showFilters)}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-            >
-              Filters {showFilters ? '▼' : '▶'}
-            </button>
-          </div>
-
-          {showFilters && (
-            <div className="grid grid-cols-3 gap-4 pt-4 border-t">
-              <div>
-                <label className="block text-sm font-medium mb-1">Role</label>
-                <select
-                  value={filters.role}
-                  onChange={(e) => setFilters({ ...filters, role: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">All Roles</option>
-                  <option value="admin">Admin</option>
-                  <option value="manager">Manager</option>
-                  <option value="member">Member</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Department</label>
-                <select
-                  value={filters.department}
-                  onChange={(e) => setFilters({ ...filters, department: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">All Departments</option>
-                  {uniqueDepartments.map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Status</label>
-                <select
-                  value={filters.status}
-                  onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-              
-              <div className="col-span-3 flex justify-end">
-                <button
-                  onClick={() => setFilters({ role: '', department: '', status: '' })}
-                  className="text-blue-600 hover:underline"
-                >
-                  Clear Filters
-                </button>
-              </div>
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex flex-wrap gap-4 items-center mb-4">
+              <Input
+                type="text"
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1 min-w-[300px]"
+              />
+              <Button
+                id="toggle-filters-button"
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                Filters {showFilters ? '▼' : '▶'}
+              </Button>
             </div>
-          )}
-        </div>
+
+            {showFilters && (
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                <div className="space-y-2">
+                  <Label htmlFor="roleFilter">Role</Label>
+                  <Select
+                    value={filters.role}
+                    onValueChange={(value) => setFilters({ ...filters, role: value })}
+                  >
+                    <SelectTrigger id="roleFilter">
+                      <SelectValue placeholder="All Roles" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value=" ">All Roles</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="member">Member</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="deptFilter">Department</Label>
+                  <Select
+                    value={filters.department}
+                    onValueChange={(value) => setFilters({ ...filters, department: value })}
+                  >
+                    <SelectTrigger id="deptFilter">
+                      <SelectValue placeholder="All Departments" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value=" ">All Departments</SelectItem>
+                      {uniqueDepartments.map(dept => (
+                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="statusFilter">Status</Label>
+                  <Select
+                    value={filters.status}
+                    onValueChange={(value) => setFilters({ ...filters, status: value })}
+                  >
+                    <SelectTrigger id="statusFilter">
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value=" ">All Status</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="col-span-3 flex justify-end">
+                  <Button
+                    variant="link"
+                    onClick={() => setFilters({ role: '', department: '', status: '' })}
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Bulk Actions */}
         {selectedRows.length > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-between">
-            <span className="text-blue-800">
-              {selectedRows.length} item{selectedRows.length > 1 ? 's' : ''} selected
-            </span>
-            <div className="flex gap-2">
-              <button
-                id="bulk-activate-button"
-                onClick={() => handleBulkAction('activate')}
-                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                Activate
-              </button>
-              <button
-                onClick={() => handleBulkAction('deactivate')}
-                className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
-              >
-                Deactivate
-              </button>
-              <button
-                onClick={() => handleBulkAction('delete')}
-                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
+          <Card className="bg-primary/10 border-primary/20 mb-4">
+            <CardContent className="p-3 flex items-center justify-between">
+              <span className="text-primary font-medium">
+                {selectedRows.length} item{selectedRows.length > 1 ? 's' : ''} selected
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  id="bulk-activate-button"
+                  size="sm"
+                  variant="default"
+                  onClick={() => handleBulkAction('activate')}
+                >
+                  Activate
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => handleBulkAction('deactivate')}
+                >
+                  Deactivate
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => handleBulkAction('delete')}
+                >
+                  Delete
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Data Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <Card>
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="px-4 py-3 text-left">
-                    <input
-                      type="checkbox"
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]">
+                    <Checkbox
                       checked={selectedRows.length === paginatedData.length && paginatedData.length > 0}
-                      onChange={handleSelectAll}
-                      className="cursor-pointer"
+                      onCheckedChange={handleSelectAll}
                     />
-                  </th>
-                  <th 
-                    className="px-4 py-3 text-left cursor-pointer hover:bg-gray-100"
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('name')}
                   >
                     Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th 
-                    className="px-4 py-3 text-left cursor-pointer hover:bg-gray-100"
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('email')}
                   >
                     Email {sortField === 'email' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th 
-                    className="px-4 py-3 text-left cursor-pointer hover:bg-gray-100"
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('role')}
                   >
                     Role {sortField === 'role' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th 
-                    className="px-4 py-3 text-left cursor-pointer hover:bg-gray-100"
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('department')}
                   >
                     Department {sortField === 'department' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th 
-                    className="px-4 py-3 text-left cursor-pointer hover:bg-gray-100"
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('status')}
                   >
                     Status {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th 
-                    className="px-4 py-3 text-left cursor-pointer hover:bg-gray-100"
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('projects')}
                   >
                     Projects {sortField === 'projects' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th className="px-4 py-3 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+                  </TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {paginatedData.map((user) => (
-                  <tr key={user.id} className="border-b hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <input
-                        type="checkbox"
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <Checkbox
                         checked={selectedRows.includes(user.id)}
-                        onChange={() => handleSelectRow(user.id)}
-                        className="cursor-pointer"
+                        onCheckedChange={() => handleSelectRow(user.id)}
                       />
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-500 rounded-full flex items-center justify-center text-primary-foreground font-bold mr-3">
                           {user.name.charAt(0)}
                         </div>
                         <div>
                           <div className="font-medium">{user.name}</div>
-                          <div className="text-sm text-gray-500">{user.id}</div>
+                          <div className="text-sm text-muted-foreground">{user.id}</div>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-4 py-3">{user.email}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeColor(user.role)}`}>
+                    </TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={getRoleVariant(user.role)}>
                         {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">{user.department}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(user.status)}`}>
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{user.department}</TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusVariant(user.status)}>
                         {user.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">{user.projects}</td>
-                    <td className="px-4 py-3">
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{user.projects}</TableCell>
+                    <TableCell>
                       <div className="flex gap-2">
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleEdit(user)}
-                          className="text-blue-600 hover:underline edit-user-button"
+                          className="edit-user-button"
                           data-user-id={user.id}
                         >
                           Edit
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleDeleteClick(user)}
-                          className="text-red-600 hover:underline delete-user-button"
+                          className="text-destructive hover:text-destructive delete-user-button"
                           data-user-id={user.id}
                         >
                           Delete
-                        </button>
+                        </Button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
 
           {/* Pagination */}
           <div className="px-4 py-3 border-t flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-muted-foreground">
                 Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
                 {Math.min(currentPage * itemsPerPage, filteredAndSortedData.length)} of{' '}
                 {filteredAndSortedData.length} results
               </span>
-              <select
-                value={itemsPerPage}
-                onChange={(e) => {
-                  setItemsPerPage(Number(e.target.value))
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={(value) => {
+                  setItemsPerPage(Number(value))
                   setCurrentPage(1)
                 }}
-                className="px-3 py-1 border rounded"
               >
-                <option value={10}>10 per page</option>
-                <option value={25}>25 per page</option>
-                <option value={50}>50 per page</option>
-              </select>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10 per page</SelectItem>
+                  <SelectItem value="25">25 per page</SelectItem>
+                  <SelectItem value="50">50 per page</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            
+
             <div className="flex gap-2">
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
-                className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 First
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
-              </button>
-              
+              </Button>
+
               {/* Page Numbers */}
               <div className="flex gap-1">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const pageNum = currentPage <= 3 
-                    ? i + 1 
+                  const pageNum = currentPage <= 3
+                    ? i + 1
                     : currentPage >= totalPages - 2
                     ? totalPages - 4 + i
                     : currentPage - 2 + i
-                  
+
                   if (pageNum < 1 || pageNum > totalPages) return null
-                  
+
                   return (
-                    <button
+                    <Button
                       key={pageNum}
+                      variant={currentPage === pageNum ? 'default' : 'outline'}
+                      size="sm"
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-1 border rounded ${
-                        currentPage === pageNum
-                          ? 'bg-blue-600 text-white'
-                          : 'hover:bg-gray-50'
-                      }`}
                     >
                       {pageNum}
-                    </button>
+                    </Button>
                   )
                 })}
               </div>
-              
-              <button
+
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setCurrentPage(totalPages)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Last
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Export Modal */}
-      {showExportModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Export Data</h2>
-            <p className="text-gray-600 mb-4">Choose the format for your export:</p>
-            <div className="space-y-2">
-              <button
-                onClick={() => handleExport('CSV')}
-                className="w-full px-4 py-2 border rounded-lg hover:bg-gray-50 text-left"
-              >
-                📄 Export as CSV
-              </button>
-              <button
-                onClick={() => handleExport('Excel')}
-                className="w-full px-4 py-2 border rounded-lg hover:bg-gray-50 text-left"
-              >
-                📊 Export as Excel
-              </button>
-              <button
-                onClick={() => handleExport('PDF')}
-                className="w-full px-4 py-2 border rounded-lg hover:bg-gray-50 text-left"
-              >
-                📑 Export as PDF
-              </button>
-              <button
-                onClick={() => handleExport('JSON')}
-                className="w-full px-4 py-2 border rounded-lg hover:bg-gray-50 text-left"
-              >
-                🔧 Export as JSON
-              </button>
-            </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setShowExportModal(false)}
-                className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-            </div>
+      <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Export Data</DialogTitle>
+            <DialogDescription>
+              Choose the format for your export:
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 py-4">
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => handleExport('CSV')}
+            >
+              📄 Export as CSV
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => handleExport('Excel')}
+            >
+              📊 Export as Excel
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => handleExport('PDF')}
+            >
+              📑 Export as PDF
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => handleExport('JSON')}
+            >
+              🔧 Export as JSON
+            </Button>
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowExportModal(false)}
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit User Modal */}
-      {showEditModal && selectedUser && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4">Edit User</h2>
+      <Dialog open={showEditModal} onOpenChange={(open) => {
+        if (!open) {
+          setShowEditModal(false)
+          setSelectedUser(null)
+          resetForm()
+        }
+      }}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update user information below.
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter user name"
-                />
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="userName">Name</Label>
+              <Input
+                id="userName"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Enter user name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="userEmail">Email</Label>
+              <Input
+                id="userEmail"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="Enter email address"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="userDepartment">Department</Label>
+              <Input
+                id="userDepartment"
+                value={formData.department}
+                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                placeholder="Enter department"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="userRole">Role</Label>
+                <Select
+                  value={formData.role}
+                  onValueChange={(value) => setFormData({ ...formData, role: value as User['role'] })}
+                >
+                  <SelectTrigger id="userRole">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="member">Member</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Email</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter email address"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Department</label>
-                <input
-                  type="text"
-                  value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter department"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Role</label>
-                  <select
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value as User['role'] })}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="member">Member</option>
-                    <option value="manager">Manager</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as User['status'] })}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Phone (Optional)</label>
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter phone number"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Location (Optional)</label>
-                <input
-                  type="text"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter location"
-                />
+              <div className="space-y-2">
+                <Label htmlFor="userStatus">Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData({ ...formData, status: value as User['status'] })}
+                >
+                  <SelectTrigger id="userStatus">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => {
-                  setShowEditModal(false)
-                  setSelectedUser(null)
-                  resetForm()
-                }}
-                className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                id="update-user-submit"
-                onClick={handleUpdateUser}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Update User
-              </button>
+            <div className="space-y-2">
+              <Label htmlFor="userPhone">Phone (Optional)</Label>
+              <Input
+                id="userPhone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="Enter phone number"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="userLocation">Location (Optional)</Label>
+              <Input
+                id="userLocation"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                placeholder="Enter location"
+              />
             </div>
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowEditModal(false)
+                setSelectedUser(null)
+                resetForm()
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              id="update-user-submit"
+              onClick={handleUpdateUser}
+            >
+              Update User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && selectedUser && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-3">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <Dialog open={showDeleteModal} onOpenChange={(open) => {
+        if (!open) {
+          setShowDeleteModal(false)
+          setSelectedUser(null)
+        }
+      }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
               <div>
-                <h2 className="text-xl font-bold">Delete User</h2>
-                <p className="text-gray-500">This action cannot be undone</p>
+                <DialogTitle>Delete User</DialogTitle>
+                <DialogDescription>This action cannot be undone</DialogDescription>
               </div>
             </div>
+          </DialogHeader>
 
-            <div className="mb-6">
-              <p className="text-gray-700">
-                Are you sure you want to delete <strong>{selectedUser.name}</strong> ({selectedUser.email})?
-                This will permanently remove the user from the system.
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setShowDeleteModal(false)
-                  setSelectedUser(null)
-                }}
-                className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                id="confirm-delete-user"
-                onClick={handleDeleteConfirm}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                Delete User
-              </button>
-            </div>
+          <div className="py-4">
+            <p className="text-sm">
+              Are you sure you want to delete <strong>{selectedUser?.name}</strong> ({selectedUser?.email})?
+              This will permanently remove the user from the system.
+            </p>
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDeleteModal(false)
+                setSelectedUser(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              id="confirm-delete-user"
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+            >
+              Delete User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

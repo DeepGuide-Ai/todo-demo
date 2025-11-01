@@ -2,6 +2,28 @@
 
 import { useState, useEffect } from 'react'
 import Navigation from '@/components/Navigation'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 type Todo = {
   id: string
@@ -177,11 +199,11 @@ export default function Todos() {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     })
 
-  const getPriorityColor = (priority: Todo['priority']) => {
+  const getPriorityVariant = (priority: Todo['priority']): 'destructive' | 'default' | 'secondary' => {
     switch (priority) {
-      case 'high': return 'text-red-600 bg-red-50'
-      case 'medium': return 'text-yellow-600 bg-yellow-50'
-      case 'low': return 'text-green-600 bg-green-50'
+      case 'high': return 'destructive'
+      case 'medium': return 'default'
+      case 'low': return 'secondary'
     }
   }
 
@@ -189,218 +211,230 @@ export default function Todos() {
     <div>
       <Navigation />
       
-      <div className="container">
+      <div className="container py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Todo List</h1>
-          <button
+          <Button
             id="add-toto-button"
             onClick={() => setShowAddModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
           >
             + Add Todo
-          </button>
+          </Button>
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <div className="flex flex-wrap gap-4 items-center">
-            <input
-              type="text"
-              placeholder="Search todos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1 min-w-[200px] px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-            
-            <div className="flex gap-2">
-              <button
-                id="filter-all"
-                onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-lg ${
-                  filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100'
-                }`}
-              >
-                All ({todos.length})
-              </button>
-              <button
-                id="filter-active"
-                onClick={() => setFilter('active')}
-                className={`px-4 py-2 rounded-lg ${
-                  filter === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-100'
-                }`}
-              >
-                Active ({todos.filter(t => !t.completed).length})
-              </button>
-              <button
-                id="filter-completed"
-                onClick={() => setFilter('completed')}
-                className={`px-4 py-2 rounded-lg ${
-                  filter === 'completed' ? 'bg-blue-600 text-white' : 'bg-gray-100'
-                }`}
-              >
-                Completed ({todos.filter(t => t.completed).length})
-              </button>
-            </div>
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex flex-wrap gap-4 items-center">
+              <Input
+                type="text"
+                placeholder="Search todos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1 min-w-[200px]"
+              />
 
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="date">Sort by Date</option>
-              <option value="priority">Sort by Priority</option>
-              <option value="title">Sort by Title</option>
-            </select>
-          </div>
-        </div>
+              <div className="flex gap-2">
+                <Button
+                  id="filter-all"
+                  variant={filter === 'all' ? 'default' : 'outline'}
+                  onClick={() => setFilter('all')}
+                >
+                  All ({todos.length})
+                </Button>
+                <Button
+                  id="filter-active"
+                  variant={filter === 'active' ? 'default' : 'outline'}
+                  onClick={() => setFilter('active')}
+                >
+                  Active ({todos.filter(t => !t.completed).length})
+                </Button>
+                <Button
+                  id="filter-completed"
+                  variant={filter === 'completed' ? 'default' : 'outline'}
+                  onClick={() => setFilter('completed')}
+                >
+                  Completed ({todos.filter(t => t.completed).length})
+                </Button>
+              </div>
+
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Sort by..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date">Sort by Date</SelectItem>
+                  <SelectItem value="priority">Sort by Priority</SelectItem>
+                  <SelectItem value="title">Sort by Title</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Todo List */}
         <div className="space-y-4">
           {filteredTodos.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg shadow">
-              <p className="text-gray-500">No todos found</p>
-            </div>
+            <Card>
+              <CardContent className="text-center py-12">
+                <p className="text-muted-foreground">No todos found</p>
+              </CardContent>
+            </Card>
           ) : (
             filteredTodos.map(todo => (
-              <div
+              <Card
                 key={todo.id}
-                className={`bg-white rounded-lg shadow p-4 ${
-                  todo.completed ? 'opacity-75' : ''
-                }`}
+                className={todo.completed ? 'opacity-75' : ''}
               >
-                <div className="flex items-start gap-4">
-                  <input
-                    type="checkbox"
-                    checked={todo.completed}
-                    onChange={() => handleToggleComplete(todo.id)}
-                    className="mt-1 w-5 h-5 cursor-pointer"
-                  />
-                  
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className={`text-lg font-semibold ${
-                          todo.completed ? 'line-through text-gray-500' : ''
-                        }`}>
-                          {todo.title}
-                        </h3>
-                        <p className="text-gray-600 mt-1">{todo.description}</p>
-                        
-                        <div className="flex gap-4 mt-3">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(todo.priority)}`}>
-                            {todo.priority.toUpperCase()}
-                          </span>
-                          {todo.dueDate && (
-                            <span className="text-sm text-gray-500">
-                              Due: {new Date(todo.dueDate).toLocaleDateString()}
-                            </span>
-                          )}
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-4">
+                    <Checkbox
+                      checked={todo.completed}
+                      onCheckedChange={() => handleToggleComplete(todo.id)}
+                      className="mt-1"
+                    />
+
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className={`text-lg font-semibold ${
+                            todo.completed ? 'line-through text-muted-foreground' : ''
+                          }`}>
+                            {todo.title}
+                          </h3>
+                          <p className="text-muted-foreground mt-1">{todo.description}</p>
+
+                          <div className="flex gap-4 mt-3 items-center">
+                            <Badge variant={getPriorityVariant(todo.priority)}>
+                              {todo.priority.toUpperCase()}
+                            </Badge>
+                            {todo.dueDate && (
+                              <span className="text-sm text-muted-foreground">
+                                Due: {new Date(todo.dueDate).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(todo)}
-                          className="text-blue-600 hover:text-blue-800 edit-todo-button"
-                          data-todo-id={todo.id}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteTodo(todo.id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          Delete
-                        </button>
+
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(todo)}
+                            className="edit-todo-button"
+                            data-todo-id={todo.id}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteTodo(todo.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             ))
           )}
         </div>
       </div>
 
       {/* Add/Edit Modal */}
-      {(showAddModal || editingTodo) && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4">
+      <Dialog open={showAddModal || !!editingTodo} onOpenChange={(open) => {
+        if (!open) {
+          setShowAddModal(false)
+          setEditingTodo(null)
+          resetForm()
+        }
+      }}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
               {editingTodo ? 'Edit Todo' : 'Add New Todo'}
-            </h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Title</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter todo title"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  rows={3}
-                  placeholder="Enter description"
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Priority</label>
-                  <select
-                    value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: e.target.value as Todo['priority'] })}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Due Date</label>
-                  <input
-                    type="date"
-                    value={formData.dueDate}
-                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
+            </DialogTitle>
+            <DialogDescription>
+              {editingTodo ? 'Make changes to your todo here.' : 'Create a new todo item.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Enter todo title"
+              />
             </div>
-            
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => {
-                  setShowAddModal(false)
-                  setEditingTodo(null)
-                  resetForm()
-                }}
-                className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                id={editingTodo ? 'update-todo-submit' : 'add-todo-submit'}
-                onClick={editingTodo ? handleUpdateTodo : handleAddTodo}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                {editingTodo ? 'Update' : 'Add'} Todo
-              </button>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={3}
+                placeholder="Enter description"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="priority">Priority</Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(value) => setFormData({ ...formData, priority: value as Todo['priority'] })}
+                >
+                  <SelectTrigger id="priority">
+                    <SelectValue placeholder="Select priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dueDate">Due Date</Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={formData.dueDate}
+                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAddModal(false)
+                setEditingTodo(null)
+                resetForm()
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              id={editingTodo ? 'update-todo-submit' : 'add-todo-submit'}
+              onClick={editingTodo ? handleUpdateTodo : handleAddTodo}
+            >
+              {editingTodo ? 'Update' : 'Add'} Todo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
