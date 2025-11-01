@@ -1,95 +1,137 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useSession, signOut } from '@/lib/auth-client'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { cn } from '@/lib/utils'
 
 export default function Navigation() {
   const router = useRouter()
   const pathname = usePathname()
   const { data: session } = useSession()
-  const [showDropdown, setShowDropdown] = useState(false)
 
   const handleLogout = async () => {
     await signOut()
-    setShowDropdown(false)
     router.push('/login')
   }
 
   const isActive = (path: string) => pathname === path
 
   return (
-    <nav className="nav">
-      <div className="flex items-center justify-between w-full">
-        <div className="flex items-center space-x-4">
-          <Link href="/" className={`nav-item ${isActive('/') || isActive('/projects') ? 'active' : ''}`}>
-            Projects
+    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <div className="mr-4 flex flex-1">
+          <Link href="/" className="mr-6 flex items-center space-x-2">
+            <span className="font-bold">Todo App</span>
           </Link>
-          <Link href="/todos" className={`nav-item ${isActive('/todos') ? 'active' : ''}`}>
-            Todos
-          </Link>
-          <Link href="/data-table" className={`nav-item ${isActive('/data-table') ? 'active' : ''}`}>
-            Data
-          </Link>
-          <Link href="/forms" className={`nav-item ${isActive('/forms') ? 'active' : ''}`}>
-            Forms
-          </Link>
-          <Link href="/upload" className={`nav-item ${isActive('/upload') ? 'active' : ''}`}>
-            Upload
-          </Link>
-          <Link href="/settings" className={`nav-item ${isActive('/settings') ? 'active' : ''}`}>
-            Settings
-          </Link>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          {session?.user ? (
-            <div className="relative">
-              <button
-                onClick={() => setShowDropdown(!showDropdown)}
-                className="flex items-center space-x-2 text-gray-700 hover:text-gray-900"
-              >
-                <span className="text-sm">{session.user.email}</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {showDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
-                  <Link
-                    href="/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setShowDropdown(false)}
-                  >
-                    Profile
-                  </Link>
-                  <Link
-                    href="/settings"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setShowDropdown(false)}
-                  >
-                    Settings
-                  </Link>
-                  <hr className="border-gray-200" />
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Logout
-                  </button>
-                </div>
+          <nav className="flex items-center space-x-6 text-sm font-medium">
+            <Link
+              href="/"
+              className={cn(
+                "transition-colors hover:text-foreground/80",
+                isActive('/') || isActive('/projects') ? "text-foreground" : "text-foreground/60"
               )}
-            </div>
+            >
+              Projects
+            </Link>
+            <Link
+              href="/todos"
+              className={cn(
+                "transition-colors hover:text-foreground/80",
+                isActive('/todos') ? "text-foreground" : "text-foreground/60"
+              )}
+            >
+              Todos
+            </Link>
+            <Link
+              href="/data-table"
+              className={cn(
+                "transition-colors hover:text-foreground/80",
+                isActive('/data-table') ? "text-foreground" : "text-foreground/60"
+              )}
+            >
+              Data
+            </Link>
+            <Link
+              href="/forms"
+              className={cn(
+                "transition-colors hover:text-foreground/80",
+                isActive('/forms') ? "text-foreground" : "text-foreground/60"
+              )}
+            >
+              Forms
+            </Link>
+            <Link
+              href="/upload"
+              className={cn(
+                "transition-colors hover:text-foreground/80",
+                isActive('/upload') ? "text-foreground" : "text-foreground/60"
+              )}
+            >
+              Upload
+            </Link>
+            <Link
+              href="/settings"
+              className={cn(
+                "transition-colors hover:text-foreground/80",
+                isActive('/settings') ? "text-foreground" : "text-foreground/60"
+              )}
+            >
+              Settings
+            </Link>
+          </nav>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          {session?.user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <span className="text-sm">{session.user.email}</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{session.user.name || 'User'}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {session.user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings">Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <>
-              <Link href="/login" className="text-sm text-white hover:text-gray-100">
-                Login
-              </Link>
-              <Link href="/signup" className="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                Sign Up
-              </Link>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/login">Login</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href="/signup">Sign Up</Link>
+              </Button>
             </>
           )}
         </div>
