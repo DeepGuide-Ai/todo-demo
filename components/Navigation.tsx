@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useSession, signOut } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,11 +14,30 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { useEffect, useState } from 'react'
+
+type UserMembership = {
+  role: string
+  organization: {
+    name: string
+  }
+}
 
 export default function Navigation() {
   const router = useRouter()
   const pathname = usePathname()
   const { data: session } = useSession()
+  const [membership, setMembership] = useState<UserMembership | null>(null)
+
+  useEffect(() => {
+    if (session?.user) {
+      // Fetch user's organization membership
+      fetch('/api/user/membership')
+        .then(res => res.ok ? res.json() : null)
+        .then(data => setMembership(data))
+        .catch(() => setMembership(null))
+    }
+  }, [session])
 
   const handleLogout = async () => {
     await signOut()
@@ -25,6 +45,14 @@ export default function Navigation() {
   }
 
   const isActive = (path: string) => pathname === path
+
+  const getRoleBadgeVariant = (role: string): 'default' | 'secondary' | 'destructive' => {
+    switch (role) {
+      case 'owner': return 'destructive'
+      case 'admin': return 'default'
+      default: return 'secondary'
+    }
+  }
 
   return (
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -102,13 +130,25 @@ export default function Navigation() {
                   </svg>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-64">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{session.user.name || 'User'}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium leading-none">{session.user.name || 'User'}</p>
+                      {membership?.role && (
+                        <Badge variant={getRoleBadgeVariant(membership.role)} className="text-[10px] px-1.5 py-0">
+                          {membership.role.toUpperCase()}
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-xs leading-none text-muted-foreground">
                       {session.user.email}
                     </p>
+                    {membership?.organization && (
+                      <p className="text-xs leading-none text-muted-foreground pt-1">
+                        🏢 {membership.organization.name}
+                      </p>
+                    )}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

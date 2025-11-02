@@ -1,22 +1,42 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import { useSession } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+
+type UserMembership = {
+  role: string
+  organization: {
+    name: string
+    slug: string
+  }
+}
 
 export default function Profile() {
   const router = useRouter()
   const { data: session } = useSession()
   const [isEditing, setIsEditing] = useState(false)
+  const [membership, setMembership] = useState<UserMembership | null>(null)
   const [formData, setFormData] = useState({
     name: session?.user?.name || '',
     email: session?.user?.email || '',
   })
+
+  useEffect(() => {
+    if (session?.user) {
+      // Fetch user's organization membership
+      fetch('/api/user/membership')
+        .then(res => res.ok ? res.json() : null)
+        .then(data => setMembership(data))
+        .catch(() => setMembership(null))
+    }
+  }, [session])
 
   if (!session) {
     router.push('/login')
@@ -114,6 +134,40 @@ export default function Profile() {
               </div>
             </CardContent>
           </Card>
+
+          {membership && (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Organization Membership</CardTitle>
+                <CardDescription>
+                  Your organization and role information
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Organization</Label>
+                  <p className="text-sm">{membership.organization.name}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Role</Label>
+                  <div>
+                    <Badge variant={
+                      membership.role === 'owner' ? 'destructive' :
+                      membership.role === 'admin' ? 'default' : 'secondary'
+                    }>
+                      {membership.role.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {membership.role === 'owner' && 'Full control over the organization'}
+                    {membership.role === 'admin' && 'Comprehensive access except organization deletion'}
+                    {membership.role === 'member' && 'Limited permissions for organization operations'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="mt-6">
             <CardHeader>
