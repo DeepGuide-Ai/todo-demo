@@ -6,6 +6,18 @@ import { RoleDefinition, PERMISSIONS_METADATA, getPermissionsByCategory, Permiss
 
 type Tab = 'members' | 'roles' | 'invitations'
 
+type OrganizationMember = {
+  id: string
+  role: string
+  createdAt: string
+  user: {
+    id: string
+    name: string | null
+    email: string
+    createdAt: string
+  }
+}
+
 export default function Settings() {
   const [activeTab, setActiveTab] = useState<Tab>('members')
   const [showAddMemberDialog, setShowAddMemberDialog] = useState(false)
@@ -14,11 +26,14 @@ export default function Settings() {
   const [sentEmail, setSentEmail] = useState('')
   const [roles, setRoles] = useState<RoleDefinition[]>([])
   const [selectedRole, setSelectedRole] = useState<RoleDefinition | null>(null)
+  const [members, setMembers] = useState<OrganizationMember[]>([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (activeTab === 'roles') {
       fetchRoles()
+    } else if (activeTab === 'members') {
+      fetchMembers()
     }
   }, [activeTab])
 
@@ -35,6 +50,21 @@ export default function Settings() {
       }
     } catch (error) {
       console.error('Failed to fetch roles:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchMembers = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/members')
+      if (response.ok) {
+        const data = await response.json()
+        setMembers(data.members)
+      }
+    } catch (error) {
+      console.error('Failed to fetch members:', error)
     } finally {
       setLoading(false)
     }
@@ -63,6 +93,19 @@ export default function Settings() {
       'Invitations': '✉️',
     }
     return icons[category] || '📋'
+  }
+
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case 'owner':
+        return 'bg-red-100 text-red-800 border-red-200'
+      case 'admin':
+        return 'bg-blue-100 text-blue-800 border-blue-200'
+      case 'member':
+        return 'bg-gray-100 text-gray-800 border-gray-200'
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200'
+    }
   }
 
   return (
@@ -99,8 +142,8 @@ export default function Settings() {
               <p className="text-gray-600 mb-6">
                 Manage your team members and their permissions.
               </p>
-              
-              <button 
+
+              <button
                 className="btn btn-success"
                 onClick={() => setShowAddMemberDialog(true)}
               >
@@ -108,23 +151,36 @@ export default function Settings() {
               </button>
 
               <div className="mt-8">
-                <h3 className="text-lg font-semibold mb-4">Current Members</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded">
-                    <div>
-                      <div className="font-medium">Admin User</div>
-                      <div className="text-sm text-gray-500">admin@example.com</div>
-                    </div>
-                    <div className="text-sm text-gray-500">Owner</div>
+                <h3 className="text-lg font-semibold mb-4">Current Members ({members.length})</h3>
+                {loading ? (
+                  <div className="text-center py-8 text-gray-500">Loading members...</div>
+                ) : members.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">No members found</div>
+                ) : (
+                  <div className="space-y-3">
+                    {members.map((member) => (
+                      <div key={member.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                            {member.user.name?.[0] || member.user.email[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">{member.user.name || 'User'}</div>
+                            <div className="text-sm text-gray-500">{member.user.email}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className={`text-xs font-medium px-3 py-1 rounded-full border ${getRoleBadgeColor(member.role)}`}>
+                            {member.role.toUpperCase()}
+                          </span>
+                          <div className="text-xs text-gray-500">
+                            Joined {new Date(member.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded">
-                    <div>
-                      <div className="font-medium">Jane Smith</div>
-                      <div className="text-sm text-gray-500">jane@example.com</div>
-                    </div>
-                    <div className="text-sm text-gray-500">Editor</div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           )}

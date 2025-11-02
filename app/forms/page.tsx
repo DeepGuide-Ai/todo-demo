@@ -92,15 +92,27 @@ export default function Forms() {
 
   const handleSubmit = async () => {
     if (!validateStep(currentStep)) return
-    
+
     setIsSubmitting(true)
-    
-    // Simulate API call
-    setTimeout(() => {
-      console.log('Form submitted:', formData)
-      setIsSubmitting(false)
+
+    try {
+      // Submit form to API
+      const response = await fetch('/api/form-submissions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to submit form')
+      }
+
+      // Show success message
       setShowSuccess(true)
-      
+
       // Reset form after 3 seconds
       setTimeout(() => {
         setShowSuccess(false)
@@ -123,7 +135,12 @@ export default function Forms() {
           agreeToTerms: false
         })
       }, 3000)
-    }, 1500)
+    } catch (error) {
+      console.error('Form submission error:', error)
+      alert('Failed to submit form. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const updateFormData = (field: keyof FormData, value: any) => {

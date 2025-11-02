@@ -56,6 +56,33 @@ model TeamMember {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model FormSubmission {
+  id              String   @id @default(cuid())
+  // Personal Info
+  firstName       String
+  lastName        String
+  email           String
+  phone           String?
+  // Company Info
+  companyName     String
+  companySize     String
+  industry        String?
+  website         String?
+  // Project Details
+  projectType     String
+  budget          String
+  timeline        String?
+  description     String
+  // Additional Info
+  howHeard        String?
+  newsletter      Boolean  @default(false)
+  // Metadata
+  status          String   @default("new") // new, contacted, in-progress, completed
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
 // Better Auth Models
 model User {
   id            String        @id @default(cuid())

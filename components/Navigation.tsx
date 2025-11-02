@@ -116,6 +116,15 @@ export default function Navigation() {
             >
               Settings
             </Link>
+            <Link
+              href="/submissions"
+              className={cn(
+                "transition-colors hover:text-foreground/80",
+                isActive('/submissions') ? "text-foreground" : "text-foreground/60"
+              )}
+            >
+              Submissions
+            </Link>
           </nav>
         </div>
 
