@@ -96,168 +96,165 @@ async function seed() {
       }
     }
 
-    // Use the first owner user for demo data
-    const userId = createdUsers[0].id;
-
-    // Clear existing demo data for this user
-    await prisma.todo.deleteMany({ where: { userId } });
-    await prisma.project.deleteMany({ where: { userId } });
-    await prisma.teamMember.deleteMany({ where: { userId } });
-
-    // Create demo todos
+    // Create demo data for each user
     console.log('📝 Creating demo todos...');
-    await prisma.todo.createMany({
-      data: [
-        {
-          title: 'Complete project documentation',
-          description: 'Write comprehensive documentation for the new feature',
-          completed: false,
-          priority: 'high',
-          dueDate: '2025-01-15',
-          userId,
-        },
-        {
-          title: 'Review pull requests',
-          description: 'Review and approve pending PRs from the team',
-          completed: true,
-          priority: 'medium',
-          dueDate: '2025-01-10',
-          userId,
-        },
-        {
-          title: 'Update dependencies',
-          description: 'Update all npm packages to latest stable versions',
-          completed: false,
-          priority: 'low',
-          dueDate: '2025-01-20',
-          userId,
-        },
-      ],
-    });
-
-    // Create demo projects
     console.log('🚀 Creating demo projects...');
-    await prisma.project.createMany({
-      data: [
-        {
-          name: 'E-commerce Platform',
-          description: 'Build a modern e-commerce platform with AI-powered recommendations',
-          status: 'in-progress',
-          progress: 65,
-          team: JSON.stringify(['Alice', 'Bob', 'Charlie']),
-          dueDate: '2025-02-15',
-          priority: 'high',
-          tags: JSON.stringify(['React', 'Node.js', 'AI']),
-          userId,
-        },
-        {
-          name: 'Mobile App Redesign',
-          description: 'Complete redesign of our mobile application with new UI/UX',
-          status: 'planning',
-          progress: 20,
-          team: JSON.stringify(['Diana', 'Eve']),
-          dueDate: '2025-03-01',
-          priority: 'medium',
-          tags: JSON.stringify(['React Native', 'Design']),
-          userId,
-        },
-        {
-          name: 'Data Analytics Dashboard',
-          description: 'Create comprehensive analytics dashboard for business intelligence',
-          status: 'review',
-          progress: 85,
-          team: JSON.stringify(['Frank', 'Grace']),
-          dueDate: '2025-01-30',
-          priority: 'high',
-          tags: JSON.stringify(['Data', 'Visualization', 'Python']),
-          userId,
-        },
-        {
-          name: 'API Documentation',
-          description: 'Document all public APIs with interactive examples',
-          status: 'completed',
-          progress: 100,
-          team: JSON.stringify(['Henry']),
-          dueDate: '2025-01-15',
-          priority: 'low',
-          tags: JSON.stringify(['Documentation', 'API']),
-          userId,
-        },
-      ],
-    });
-
-    // Create demo team members
     console.log('👥 Creating demo team members...');
-    await prisma.teamMember.createMany({
-      data: [
-        {
-          name: 'John Doe',
-          email: 'john.doe@example.com',
-          role: 'admin',
-          department: 'Engineering',
-          status: 'active',
-          joinDate: '2023-01-15',
-          phone: '+1 234-567-8900',
-          location: 'New York, USA',
-          projects: 12,
-          userId,
-        },
-        {
-          name: 'Jane Smith',
-          email: 'jane.smith@example.com',
-          role: 'manager',
-          department: 'Product',
-          status: 'active',
-          joinDate: '2023-03-20',
-          phone: '+1 234-567-8901',
-          location: 'San Francisco, USA',
-          projects: 8,
-          userId,
-        },
-        {
-          name: 'Bob Wilson',
-          email: 'bob.wilson@example.com',
-          role: 'member',
-          department: 'Design',
-          status: 'active',
-          joinDate: '2023-06-10',
-          phone: '+1 234-567-8902',
-          location: 'Austin, USA',
-          projects: 5,
-          userId,
-        },
-        {
-          name: 'Alice Brown',
-          email: 'alice.brown@example.com',
-          role: 'member',
-          department: 'Marketing',
-          status: 'inactive',
-          joinDate: '2023-02-28',
-          phone: '+1 234-567-8903',
-          location: 'Seattle, USA',
-          projects: 3,
-          userId,
-        },
-        {
-          name: 'Charlie Davis',
-          email: 'charlie.davis@example.com',
-          role: 'manager',
-          department: 'Sales',
-          status: 'active',
-          joinDate: '2023-04-15',
-          phone: '+1 234-567-8904',
-          location: 'Boston, USA',
-          projects: 10,
-          userId,
-        },
-      ],
-    });
+
+    for (const user of createdUsers) {
+      // Create todos for each user
+      await prisma.todo.createMany({
+        data: [
+          {
+            title: 'Complete project documentation',
+            description: 'Write comprehensive documentation for the new feature',
+            completed: false,
+            priority: 'high',
+            dueDate: '2025-01-15',
+            userId: user.id,
+          },
+          {
+            title: 'Review pull requests',
+            description: 'Review and approve pending PRs from the team',
+            completed: true,
+            priority: 'medium',
+            dueDate: '2025-01-10',
+            userId: user.id,
+          },
+          {
+            title: 'Update dependencies',
+            description: 'Update all npm packages to latest stable versions',
+            completed: false,
+            priority: 'low',
+            dueDate: '2025-01-20',
+            userId: user.id,
+          },
+        ],
+      });
+
+      // Create projects for each user
+      await prisma.project.createMany({
+        data: [
+          {
+            name: 'E-commerce Platform',
+            description: 'Build a modern e-commerce platform with AI-powered recommendations',
+            status: 'in-progress',
+            progress: 65,
+            team: JSON.stringify(['Alice', 'Bob', 'Charlie']),
+            dueDate: '2025-02-15',
+            priority: 'high',
+            tags: JSON.stringify(['React', 'Node.js', 'AI']),
+            userId: user.id,
+          },
+          {
+            name: 'Mobile App Redesign',
+            description: 'Complete redesign of our mobile application with new UI/UX',
+            status: 'planning',
+            progress: 20,
+            team: JSON.stringify(['Diana', 'Eve']),
+            dueDate: '2025-03-01',
+            priority: 'medium',
+            tags: JSON.stringify(['React Native', 'Design']),
+            userId: user.id,
+          },
+          {
+            name: 'Data Analytics Dashboard',
+            description: 'Create comprehensive analytics dashboard for business intelligence',
+            status: 'review',
+            progress: 85,
+            team: JSON.stringify(['Frank', 'Grace']),
+            dueDate: '2025-01-30',
+            priority: 'high',
+            tags: JSON.stringify(['Data', 'Visualization', 'Python']),
+            userId: user.id,
+          },
+          {
+            name: 'API Documentation',
+            description: 'Document all public APIs with interactive examples',
+            status: 'completed',
+            progress: 100,
+            team: JSON.stringify(['Henry']),
+            dueDate: '2025-01-15',
+            priority: 'low',
+            tags: JSON.stringify(['Documentation', 'API']),
+            userId: user.id,
+          },
+        ],
+      });
+
+      // Create team members for each user with unique emails
+      const userEmail = user.email.split('@')[0]; // Get email prefix for uniqueness
+      await prisma.teamMember.createMany({
+        data: [
+          {
+            name: 'John Doe',
+            email: `john.doe.${userEmail}@example.com`,
+            role: 'admin',
+            department: 'Engineering',
+            status: 'active',
+            joinDate: '2023-01-15',
+            phone: '+1 234-567-8900',
+            location: 'New York, USA',
+            projects: 12,
+            userId: user.id,
+          },
+          {
+            name: 'Jane Smith',
+            email: `jane.smith.${userEmail}@example.com`,
+            role: 'manager',
+            department: 'Product',
+            status: 'active',
+            joinDate: '2023-03-20',
+            phone: '+1 234-567-8901',
+            location: 'San Francisco, USA',
+            projects: 8,
+            userId: user.id,
+          },
+          {
+            name: 'Bob Wilson',
+            email: `bob.wilson.${userEmail}@example.com`,
+            role: 'member',
+            department: 'Design',
+            status: 'active',
+            joinDate: '2023-06-10',
+            phone: '+1 234-567-8902',
+            location: 'Austin, USA',
+            projects: 5,
+            userId: user.id,
+          },
+          {
+            name: 'Alice Brown',
+            email: `alice.brown.${userEmail}@example.com`,
+            role: 'member',
+            department: 'Marketing',
+            status: 'inactive',
+            joinDate: '2023-02-28',
+            phone: '+1 234-567-8903',
+            location: 'Seattle, USA',
+            projects: 3,
+            userId: user.id,
+          },
+          {
+            name: 'Charlie Davis',
+            email: `charlie.davis.${userEmail}@example.com`,
+            role: 'manager',
+            department: 'Sales',
+            status: 'active',
+            joinDate: '2023-04-15',
+            phone: '+1 234-567-8904',
+            location: 'Boston, USA',
+            projects: 10,
+            userId: user.id,
+          },
+        ],
+      });
+    }
 
     console.log('');
     console.log('✅ Demo data created:');
-    console.log('   📝 3 Todos');
-    console.log('   🚀 4 Projects');
-    console.log('   👥 5 Team Members');
+    console.log(`   📝 ${createdUsers.length * 3} Todos (3 per user)`);
+    console.log(`   🚀 ${createdUsers.length * 4} Projects (4 per user)`);
+    console.log(`   👥 ${createdUsers.length * 5} Team Members (5 per user)`);
     console.log('   🏢 1 Organization (Demo Company)');
     console.log(`   🔐 ${createdUsers.length} Users with RBAC`);
     console.log('');
