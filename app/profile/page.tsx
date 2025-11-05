@@ -20,6 +20,7 @@ type UserMembership = {
 
 export default function Profile() {
   const router = useRouter()
+  const [isMounted, setIsMounted] = useState(false)
   const { data: session } = useSession()
   const [isEditing, setIsEditing] = useState(false)
   const [membership, setMembership] = useState<UserMembership | null>(null)
@@ -27,6 +28,10 @@ export default function Profile() {
     name: session?.user?.name || '',
     email: session?.user?.email || '',
   })
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     if (session?.user) {
@@ -37,6 +42,11 @@ export default function Profile() {
         .catch(() => setMembership(null))
     }
   }, [session])
+
+  // Prevent hydration mismatch by only rendering on client
+  if (!isMounted) {
+    return null
+  }
 
   if (!session) {
     router.push('/login')

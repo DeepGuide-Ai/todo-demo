@@ -3,6 +3,8 @@ import { getSession } from '@/lib/auth-helper'
 import { hasPermission } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const session = await getSession()
