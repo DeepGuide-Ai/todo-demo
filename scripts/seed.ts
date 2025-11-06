@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
