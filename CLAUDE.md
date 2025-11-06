@@ -27,28 +27,58 @@ npm run lint       # Run ESLint
 - **React 18** with TypeScript
 - **Tailwind CSS v4** with PostCSS
 - **TypeScript** with strict mode enabled
+- **Prisma ORM** with PostgreSQL (Neon)
+- **Better Auth** for authentication and RBAC
 
 ### Project Structure
 - `/app` - Next.js App Router pages and layouts
-  - `/todos` - Main Todo application page with full CRUD functionality
-  - Other routes include: login, signup, settings, projects, forms, data-table, upload
-- `/components` - Reusable components (e.g., Navigation)
+  - `/todos` - Todo management with full CRUD
+  - `/projects` - Project management
+  - `/settings` - Organization settings with RBAC
+  - `/profile` - User profile page
+  - `/forms` - Form submissions
+  - `/data-table` - Data table view
+  - `/login`, `/signup` - Authentication pages
+- `/components` - Reusable UI components (Navigation, etc.)
+- `/lib` - Core utilities (Prisma client, auth config, permissions)
+- `/prisma` - Database schema and migrations
 - `/public` - Static assets
 
 ### Key Features
-- **Todo Management**: Full CRUD operations with localStorage persistence
-- **Todo Properties**: Title, description, priority levels (low/medium/high), due dates
-- **Filtering & Search**: Filter by status (all/active/completed), search by title/description
-- **Sorting**: By date, priority, or title
+- **Authentication**: Better Auth with email/password
+- **RBAC**: Organization-based access control (Owner, Admin, Member roles)
+- **Todo Management**: Full CRUD with database persistence
+- **Project Management**: Track projects with teams and progress
+- **Team Members**: Manage team member information
+- **Form Submissions**: Handle form data
+- **Multi-tenancy**: Organization-based data isolation
 
 ### Configuration
 - **TypeScript**: Path alias `@/*` maps to root directory
 - **Next.js**: Standalone output mode with React strict mode
-- **Environment Variables**: DeepGuide integration variables in `.env`:
-  - `NEXT_PUBLIC_DEEPGUIDE_API_KEY`
-  - `NEXT_PUBLIC_DEEPGUIDE_WORKSPACE_ID`
-  - `NEXT_PUBLIC_DEEPGUIDE_BASE_URL`
+- **Environment Variables** in `.env`:
+  - `DATABASE_URL` - PostgreSQL connection string (Neon)
+  - `BETTER_AUTH_SECRET` - Authentication secret key
+  - `BETTER_AUTH_URL` - Base URL of your application
+  - `NEXT_PUBLIC_DEEPGUIDE_*` - DeepGuide integration (optional)
 
 ### Data Persistence
-Todos are stored in browser localStorage with the key `todos`. Each todo has:
-- id, title, description, completed status, priority, dueDate, createdAt timestamp
+- **Database**: PostgreSQL (Neon for production, can use local PostgreSQL for dev)
+- **ORM**: Prisma with models for:
+  - Users, Sessions, Accounts (auth)
+  - Organizations, Members, Invitations (RBAC)
+  - Todos, Projects, TeamMembers, FormSubmissions (app data)
+- **Auth**: Better Auth with organization plugin
+
+### Database Commands
+```bash
+npx prisma generate     # Generate Prisma client
+npx prisma db push      # Push schema to database
+npm run seed           # Seed with demo data
+```
+
+### Demo Accounts (after seeding)
+All accounts use password: `password123`
+- `owner@example.com` - Full organization control
+- `admin@example.com` - Comprehensive access
+- `member@example.com` - Limited permissions

@@ -18,7 +18,7 @@ In your Vercel project:
 
 ```
 DATABASE_URL=postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech/neondb?sslmode=require
-BETTER_AUTH_SECRET=kCjohh8H1YPGF34UiSH4uIRRPaFaW5fc
+BETTER_AUTH_SECRET=<SECRET>
 BETTER_AUTH_URL=https://your-app.vercel.app
 ```
 
