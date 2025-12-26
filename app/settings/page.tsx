@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Navigation from '@/components/Navigation'
-import { RoleDefinition, PERMISSIONS_METADATA, getPermissionsByCategory, Permission } from '@/lib/permissions'
+import { RoleDefinition, PERMISSIONS_METADATA, getPermissionsByCategory, Permission, DEFAULT_ROLES } from '@/lib/permissions'
+import { usePermission } from '@/hooks/usePermission'
 
 type Tab = 'members' | 'roles' | 'invitations'
 
@@ -28,6 +29,15 @@ export default function Settings() {
   const [selectedRole, setSelectedRole] = useState<RoleDefinition | null>(null)
   const [members, setMembers] = useState<OrganizationMember[]>([])
   const [loading, setLoading] = useState(false)
+  const [showRoleChangeDialog, setShowRoleChangeDialog] = useState<{member: OrganizationMember, newRole: string} | null>(null)
+
+  // Permission hook for role-based UI controls
+  const { hasPermission, role: currentUserRole, loading: permissionLoading } = usePermission()
+
+  // Permission checks
+  const canInviteMembers = hasPermission('member:invite')
+  const canRemoveMembers = hasPermission('member:remove')
+  const canUpdateRoles = hasPermission('member:update_role')
 
   useEffect(() => {
     if (activeTab === 'roles') {
@@ -143,12 +153,47 @@ export default function Settings() {
                 Manage your team members and their permissions.
               </p>
 
-              <button
-                className="btn btn-success"
-                onClick={() => setShowAddMemberDialog(true)}
-              >
-                Add Member
-              </button>
+              {/* Permission-based Add Member Button */}
+              <div>
+                <button
+                  className={`btn ${canInviteMembers ? 'btn-success' : 'btn-disabled opacity-50 cursor-not-allowed'}`}
+                  onClick={() => canInviteMembers && setShowAddMemberDialog(true)}
+                  disabled={!canInviteMembers}
+                >
+                  {canInviteMembers ? (
+                    'Add Member'
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      Add Member
+                    </span>
+                  )}
+                </button>
+                {!canInviteMembers && (
+                  <p className="text-sm text-red-600 mt-2">
+                    You don&apos;t have permission to invite members
+                  </p>
+                )}
+              </div>
+
+              {/* Current User Permission Info */}
+              {!permissionLoading && (
+                <div className={`mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm ${
+                  currentUserRole === 'owner'
+                    ? 'bg-red-50 text-red-700 border border-red-200'
+                    : currentUserRole === 'admin'
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                    : 'bg-gray-50 text-gray-700 border border-gray-200'
+                }`}>
+                  <span>Your role:</span>
+                  <span className="font-semibold">{currentUserRole?.toUpperCase()}</span>
+                  {!canInviteMembers && (
+                    <span className="text-gray-500 ml-2">• Limited permissions</span>
+                  )}
+                </div>
+              )}
 
               <div className="mt-8">
                 <h3 className="text-lg font-semibold mb-4">Current Members ({members.length})</h3>
@@ -170,11 +215,44 @@ export default function Settings() {
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className={`text-xs font-medium px-3 py-1 rounded-full border ${getRoleBadgeColor(member.role)}`}>
-                            {member.role.toUpperCase()}
-                          </span>
+                          {/* Role Badge or Dropdown */}
+                          {canUpdateRoles ? (
+                            <select
+                              value={member.role}
+                              onChange={(e) => setShowRoleChangeDialog({ member, newRole: e.target.value })}
+                              className="text-xs font-medium px-3 py-1.5 rounded-full border bg-white cursor-pointer hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              {DEFAULT_ROLES.map((role) => (
+                                <option key={role.id} value={role.id}>
+                                  {role.name.toUpperCase()}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className={`text-xs font-medium px-3 py-1 rounded-full border ${getRoleBadgeColor(member.role)}`}>
+                              {member.role.toUpperCase()}
+                            </span>
+                          )}
+
                           <div className="text-xs text-gray-500">
                             Joined {new Date(member.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                          </div>
+
+                          {/* Remove Member Button */}
+                          <div>
+                            <button
+                              className={`p-1.5 rounded ${
+                                canRemoveMembers
+                                  ? 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                                  : 'text-gray-300 cursor-not-allowed'
+                              }`}
+                              disabled={!canRemoveMembers}
+                              title={canRemoveMembers ? 'Remove member' : 'No permission'}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -249,45 +327,72 @@ export default function Settings() {
                           </div>
                         </div>
 
+                        {/* Permission Summary */}
+                        <div className="mb-6 flex gap-4">
+                          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg text-sm">
+                            <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-green-800">
+                              <strong>{selectedRole.permissions.length}</strong> Granted
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg text-sm">
+                            <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-red-700">
+                              <strong>{21 - selectedRole.permissions.length}</strong> Denied
+                            </span>
+                          </div>
+                        </div>
+
                         <div className="space-y-6">
                           {Object.entries(getPermissionsByCategory()).map(([category, permissions]) => {
                             const rolePermissions = selectedRole.permissions
-                            const categoryPermissions = permissions.filter(p => rolePermissions.includes(p as Permission))
-
-                            if (categoryPermissions.length === 0) return null
 
                             return (
                               <div key={category} className="bg-white border border-gray-200 rounded-lg p-4">
                                 <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                                   <span className="text-lg">{getCategoryIcon(category)}</span>
                                   {category}
+                                  <span className="text-xs text-gray-500 font-normal ml-auto">
+                                    {permissions.filter(p => rolePermissions.includes(p as Permission)).length}/{permissions.length} granted
+                                  </span>
                                 </h4>
                                 <div className="space-y-2">
-                                  {categoryPermissions.map((permission) => {
+                                  {permissions.map((permission) => {
                                     const metadata = PERMISSIONS_METADATA[permission as Permission]
-                                    const hasPermission = rolePermissions.includes(permission as Permission)
+                                    const hasThisPermission = rolePermissions.includes(permission as Permission)
 
                                     return (
                                       <div
                                         key={permission}
                                         className={`flex items-start gap-3 p-3 rounded ${
-                                          hasPermission ? 'bg-green-50' : 'bg-gray-50'
+                                          hasThisPermission ? 'bg-green-50' : 'bg-red-50'
                                         }`}
                                       >
                                         <div className="mt-0.5">
-                                          {hasPermission ? (
+                                          {hasThisPermission ? (
                                             <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                             </svg>
                                           ) : (
-                                            <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                                             </svg>
                                           )}
                                         </div>
                                         <div className="flex-1">
-                                          <div className="font-medium text-gray-900">{metadata.label}</div>
-                                          <div className="text-sm text-gray-600">{metadata.description}</div>
+                                          <div className={`font-medium ${hasThisPermission ? 'text-gray-900' : 'text-gray-500'}`}>
+                                            {metadata.label}
+                                          </div>
+                                          <div className={`text-sm ${hasThisPermission ? 'text-gray-600' : 'text-gray-400'}`}>
+                                            {metadata.description}
+                                          </div>
+                                        </div>
+                                        <div className={`text-xs px-2 py-1 rounded ${hasThisPermission ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                                          {hasThisPermission ? 'Granted' : 'Denied'}
                                         </div>
                                       </div>
                                     )
@@ -376,6 +481,46 @@ export default function Settings() {
           <p className="success-description">
             An invitation has been sent to {sentEmail}.
           </p>
+        </div>
+      )}
+
+      {/* Role Change Confirmation Dialog */}
+      {showRoleChangeDialog && (
+        <div className="dialog-overlay" onClick={() => setShowRoleChangeDialog(null)}>
+          <div className="dialog" onClick={(e) => e.stopPropagation()}>
+            <h2 className="dialog-title">Change Member Role</h2>
+            <p className="dialog-description">
+              Are you sure you want to change <strong>{showRoleChangeDialog.member.user.name || showRoleChangeDialog.member.user.email}</strong>&apos;s role from{' '}
+              <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${getRoleBadgeColor(showRoleChangeDialog.member.role)}`}>
+                {showRoleChangeDialog.member.role.toUpperCase()}
+              </span>{' '}
+              to{' '}
+              <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${getRoleBadgeColor(showRoleChangeDialog.newRole)}`}>
+                {showRoleChangeDialog.newRole.toUpperCase()}
+              </span>?
+            </p>
+            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+              <strong>Note:</strong> This will change the permissions available to this user immediately.
+            </div>
+            <div className="dialog-actions">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowRoleChangeDialog(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  // In a real app, this would make an API call to update the role
+                  console.log(`Changing ${showRoleChangeDialog.member.user.email} role to ${showRoleChangeDialog.newRole}`)
+                  setShowRoleChangeDialog(null)
+                }}
+              >
+                Confirm Change
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
