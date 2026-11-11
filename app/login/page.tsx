@@ -102,9 +102,7 @@ export default function Login() {
                 <input type="checkbox" className="rounded" />
                 <span className="text-muted-foreground">Remember me</span>
               </label>
-              <Link href="/forgot-password" className="text-primary hover:underline">
-                Forgot password?
-              </Link>
+              <span className="text-muted-foreground">For password help, contact your administrator.</span>
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
