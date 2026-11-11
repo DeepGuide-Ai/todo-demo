@@ -1,6 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { useSession } from '@/lib/auth-client'
+import { parseProjectList } from '@/lib/project-data'
 import Navigation from '@/components/Navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -45,6 +48,9 @@ type Project = {
 }
 
 export default function Projects() {
+  const router = useRouter()
+  const { data: session, isPending } = useSession()
+  const [loadError, setLoadError] = useState('')
   const [projects, setProjects] = useState<Project[]>([])
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [filterStatus, setFilterStatus] = useState<string>('all')
@@ -60,28 +66,42 @@ export default function Projects() {
     dueDate: ''
   })
 
-  useEffect(() => {
-    fetchProjects()
-  }, [])
-
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
+    setLoadError('')
     try {
       const response = await fetch('/api/projects')
+      if (response.status === 401) {
+        setProjects([])
+        router.replace('/login')
+        return
+      }
+      if (!response.ok) throw new Error('Failed to fetch projects')
       if (response.ok) {
         const data = await response.json()
         const parsedProjects = data.map((p: any) => ({
           ...p,
-          team: JSON.parse(p.team || '[]'),
-          tags: JSON.parse(p.tags || '[]')
+          team: parseProjectList(p.team),
+          tags: parseProjectList(p.tags)
         }))
         setProjects(parsedProjects)
       }
     } catch (error) {
+      setLoadError('Unable to load projects. Please try again.')
       console.error('Failed to fetch projects:', error)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    if (isPending) return
+    if (!session?.user) {
+      setProjects([])
+      router.replace('/login')
+      return
+    }
+    void fetchProjects()
+  }, [isPending, session?.user.id, router, fetchProjects])
 
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -166,7 +186,19 @@ export default function Projects() {
     }
   }
 
-  if (isLoading) {
+  if (loadError && session?.user) {
+    return (
+      <div className="min-h-screen">
+        <Navigation />
+        <div className="p-8" role="alert">
+          <p>{loadError}</p>
+          <Button onClick={() => void fetchProjects()}>Try again</Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (isLoading || isPending || !session?.user) {
     return (
       <div>
         <Navigation />

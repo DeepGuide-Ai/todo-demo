@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { isStringArray } from '@/lib/project-data';
 import { requireAuth } from '@/lib/auth-helper';
 
 export async function GET() {
@@ -24,6 +25,10 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
     const body = await request.json();
+    if (!body || typeof body !== 'object' ||
+        ['team', 'tags'].some(field => body[field] !== undefined && !isStringArray(body[field]))) {
+      return NextResponse.json({ error: 'team and tags must be arrays of strings' }, { status: 400 });
+    }
 
     const project = await prisma.project.create({
       data: {
